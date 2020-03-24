@@ -19,10 +19,10 @@ typedef struct lsm{
   string disk1;
 } lsm;
 
-typedef struct nodei{
-  node *node;
-  int index;
-} nodei;
+// typedef struct nodei{
+//   node *node;
+//   int index;
+// } nodei;
 
 lsm* init_new_lsm(size_t bufferSize);
 
