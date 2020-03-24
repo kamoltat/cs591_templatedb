@@ -6,24 +6,23 @@
 
 using namespace std;
 
-typedef struct node{
+typedef struct Node{
   int key;
   int val;
-} node;
+} Node;
 
-typedef struct lsm{
-  size_t block_size; // This is the number of nodes each block can hold.
-  int k; // The LSM tree grows in dimension k.
-  size_t next_empty;
-  node *block;
-  string disk1;
-} lsm;
-
+class LSMTree {
+    public:
+        LSMTree(size_t bufferSize);
+    private:
+        size_t block_size;
+        int k;
+        size_t next_empty;
+        Node* block;
+};
 // typedef struct nodei{
 //   node *node;
 //   int index;
 // } nodei;
-
-lsm* init_new_lsm(size_t bufferSize);
 
 #endif

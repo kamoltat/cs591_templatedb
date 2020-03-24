@@ -7,8 +7,6 @@ int main () {
     // Say HelloWorld five times
     // cout << "here";
     size_t n = 500;
-    lsm* temp;
-    temp = init_new_lsm(n);
-
+    LSMTree test = LSMTree(n);
     return 0;
 }
