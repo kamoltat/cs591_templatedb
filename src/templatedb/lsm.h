@@ -14,7 +14,7 @@ typedef struct Node{
 class LSMTree {
     public:
         LSMTree(size_t bufferSize);
-        void put(int key, int value);
+        void put(int *key, int *value);
         void printBuffer();
     private:
         size_t block_size;

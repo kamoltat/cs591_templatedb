@@ -12,10 +12,10 @@ LSMTree::LSMTree(size_t buffer_size) {
     cout << "completed\n";    
 }
 
-void LSMTree::put(int key, int value) {
+void LSMTree::put(int *key, int *value) {
     Node newData;
-    newData.key = key;
-    newData.val = value;
+    newData.key = *key;
+    newData.val = *value;
 
     block[next_empty] = newData;
     next_empty += 1;
