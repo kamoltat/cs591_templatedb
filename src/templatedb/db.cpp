@@ -1,7 +1,32 @@
-#include "templatedb/db.hpp"
+#include "./db.hpp"
 
 using namespace templatedb;
+using namespace std;
 
+void DB::init_new_lsm(size_t buffer_size) {
+
+    lsm* newTree;
+    if (!newTree) {
+        cout << "Init Err";  
+    }
+
+    newTree->block_size = buffer_size;
+    newTree->k = 2;
+    newTree->next_empty = 0;
+    newTree->node_size = sizeof(node);
+    newTree->block = new node[newTree->block_size];
+
+    if (!newTree->block) {
+        cout << "Init Block Err";
+        return;
+    }
+
+    // newTree->disk1 = "storage.txt";
+    cout << "completed";
+
+    tree = newTree;
+    
+}
 
 
 Value DB::get(int key)

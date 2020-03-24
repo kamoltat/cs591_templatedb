@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "templatedb/operation.hpp"
+#include "./operation.hpp"
 
 namespace templatedb
 {
@@ -21,6 +21,26 @@ typedef enum _status_code
     ERROR_OPEN = 100,
 } db_status;
 
+typedef struct _node{
+  int key;
+  int val;
+} node;
+
+typedef struct _lsm{
+  size_t block_size; // This is the number of nodes each block can hold.
+  int k; // The LSM tree grows in dimension k.
+  int node_size;
+  size_t next_empty;
+  node *block;
+  char* disk1;
+//   bool sorted;
+
+} lsm;
+
+typedef struct _nodei{
+  node *node;
+  int index;
+} nodei;
 
 class Value
 {
@@ -42,36 +62,13 @@ public:
 class DB
 {
 
-
-
-typedef struct _node{
-  int key;
-  Value val;
-} node;
-
-typedef struct _lsm{
-  size_t block_size; // This is the number of nodes each block can hold.
-  int k; // The LSM tree grows in dimension k.
-  int node_size;
-  size_t next_empty;
-  node *block;
-  char* disk1;
-//   bool sorted;
-
-} lsm;
-
-typedef struct _nodei{
-  node *node;
-  int index;
-} nodei;
-
 public:
     db_status status;
 
     DB() {};
     ~DB() {close();};
 
-    lsm* init_new_lsm(size_t block_size, bool sorted);
+    void init_new_lsm(size_t buffer_size);
 
     Value get(int key);
     void put(int key, Value val);
@@ -90,6 +87,7 @@ public:
 private:
     std::fstream file;
     std::unordered_map<int, Value> table;
+    lsm* tree;
     size_t value_dimensions = 0;
 
     bool write_to_file();
