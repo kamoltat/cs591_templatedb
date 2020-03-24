@@ -9,5 +9,5 @@ LSMTree::LSMTree(size_t buffer_size) {
     next_empty = 0;
     block = new Node[block_size];
     // newTree->disk1 = "storage.txt";
-    cout << "completed";    
+    cout << "completed\n";    
 }
