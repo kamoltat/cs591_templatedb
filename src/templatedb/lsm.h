@@ -19,6 +19,7 @@ class LSMTree {
         int k;
         size_t next_empty;
         Node* block;
+        string disk;
 };
 // typedef struct nodei{
 //   node *node;
