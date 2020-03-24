@@ -6,12 +6,12 @@
 
 using namespace std;
 
-typedef struct _node{
+typedef struct node{
   int key;
   int val;
 } node;
 
-typedef struct _lsm{
+typedef struct lsm{
   size_t block_size; // This is the number of nodes each block can hold.
   int k; // The LSM tree grows in dimension k.
   size_t next_empty;
@@ -19,7 +19,7 @@ typedef struct _lsm{
   string disk1;
 } lsm;
 
-typedef struct _nodei{
+typedef struct nodei{
   node *node;
   int index;
 } nodei;
