@@ -36,3 +36,6 @@ build
 
 # Workspace settings
 .vscode
+
+#Output file from program
+storage.txt

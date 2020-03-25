@@ -16,6 +16,7 @@ class LSMTree {
         LSMTree(size_t bufferSize);
         void put(int *key, int *value);
         void printBuffer();
+        void write_to_disk(Node newNode);
     private:
         size_t block_size;
         int k;
