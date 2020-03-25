@@ -15,7 +15,7 @@ LSMTree::LSMTree(size_t buffer_size) {
     cout << "completed\n";    
 }
 
-void LSMTree::write_to_disk(Node newData){
+void LSMTree::write_to_disk(){
     
     
     //flush all data in memory to disk and also newData
@@ -63,7 +63,7 @@ void LSMTree::put(int *key, int *value) {
     newData.val = *value;
     if (next_empty == block_size) {
         // write to disk since buffer is full
-        write_to_disk(newData);
+        write_to_disk();
     }
 
     block[next_empty] = newData;
@@ -116,9 +116,9 @@ void LSMTree::mergeSort(Node* inputBlock, int n) {
     copy(inputBlock, &inputBlock[mid], leftArray);
     copy(&inputBlock[mid], &inputBlock[n], rightArray);
 
-    LSMTree::mergeSort(leftArray, mid);
-    LSMTree::mergeSort(rightArray, n - mid);
-    LSMTree::mergeStep(inputBlock, leftArray, mid, rightArray, n - mid);
+    mergeSort(leftArray, mid);
+    mergeSort(rightArray, n - mid);
+    mergeStep(inputBlock, leftArray, mid, rightArray, n - mid);
 
     delete(leftArray);
     delete(rightArray);
