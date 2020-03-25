@@ -18,6 +18,7 @@ class LSMTree {
         void put(int *key, int *value);
         void printBuffer();
         void merge();
+        void write_to_disk(Node newNode);
     private:
         void mergeSort(Node* block, int n);
         void mergeStep(Node* whole, Node* leftArray, int leftSize, Node* rightArray, int rightSize);
