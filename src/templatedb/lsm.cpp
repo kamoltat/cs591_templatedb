@@ -32,7 +32,7 @@ void LSMTree::write_to_disk(Node newData){
     for (int i = 0; i < block_size; i++) {
         file_obj.write((char*)&block[i], sizeof(block[i])); 
     }
-    file_obj.write((char*)&newData, sizeof(newData)); 
+    // file_obj.write((char*)&newData, sizeof(newData)); 
     file_obj.close();
 
     // Object to read from file 
@@ -61,11 +61,10 @@ void LSMTree::put(int *key, int *value) {
     Node newData;
     newData.key = *key;
     newData.val = *value;
-    if(next_empty == block_size){
+    if (next_empty == block_size) {
         // write to disk since buffer is full
         write_to_disk(newData);
     }
-
 
     block[next_empty] = newData;
     next_empty += 1;
