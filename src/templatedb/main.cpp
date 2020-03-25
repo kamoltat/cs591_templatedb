@@ -9,11 +9,12 @@ int main () {
         test.put(&i, &i);
     }
 
-    // for (int i = 10; i > -1; i--) {
-    //     test.put(&i, &i);
-    // }
-    
+    for (int i = 0; i < 8; i++) {
+        test.put(&i, &i);
+    }
     // test.merge();
+    cout << "**********************COMPLETED ADDITIONS***************************" << endl;
     test.printBuffer();
+    test.readFromDisk();
     return 0;
 }

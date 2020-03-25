@@ -1,8 +1,5 @@
 #include "lsm.h"
 
-#include <iostream>
-#include <fstream>
-
 using namespace std;
 
 LSMTree::LSMTree(size_t buffer_size) {
@@ -15,27 +12,8 @@ LSMTree::LSMTree(size_t buffer_size) {
     cout << "completed\n";    
 }
 
-void LSMTree::write_to_disk(){
-    
-    
-    //flush all data in memory to disk and also newData
-    //store it as storage.txt
-    // ofstream file (disk);
-    // for (int i = 0; i < block_size; i++) {
-    //     file << block[i].key << ',' << block[i].val << '\n';
-    // }
-    // file << newData.key << ',' << newData.val << '\n';
-    // file.close();
-
-    ofstream file_obj;
-    file_obj.open(disk, ios::app);
-    for (int i = 0; i < block_size; i++) {
-        file_obj.write((char*)&block[i], sizeof(block[i])); 
-    }
-    // file_obj.write((char*)&newData, sizeof(newData)); 
-    file_obj.close();
-
-    // Object to read from file 
+void LSMTree::readFromDisk() {
+        // Object to read from file 
     ifstream ifile_obj; 
   
     // Opening file in input mode 
@@ -54,7 +32,87 @@ void LSMTree::write_to_disk(){
         ifile_obj.read((char*)&obj, sizeof(obj)); 
     }
     ifile_obj.close();
+}
+
+int LSMTree::findFileSize() {
+    ifstream ifile_obj; 
+    ifile_obj.open(disk, ios::in); 
+    Node obj; 
+    int numElements = 0;
+
+    ifile_obj.read((char*)&obj, sizeof(obj));
+    while (!ifile_obj.eof()) { 
+        numElements += 1;
+        ifile_obj.read((char*)&obj, sizeof(obj)); 
+    }
+    
+    ifile_obj.close();
+
+    return numElements;
+}
+
+void LSMTree::populateFileData(Node* fileData) {
+    ifstream ifile_obj; 
+    ifile_obj.open(disk, ios::in); 
+    Node obj; 
+    int index = 0;
+  
+    ifile_obj.read((char*)&obj, sizeof(obj));
+    while (!ifile_obj.eof()) { 
+        fileData[index] = Node{obj.key, obj.val};
+        index += 1;
+        ifile_obj.read((char*)&obj, sizeof(obj)); 
+    }
+
+    ifile_obj.close();
+}
+
+void LSMTree::write_to_disk(){
+    //flush all data in memory to disk and also newData
+    //store it as storage.txt
+    // ofstream file (disk);
+    // for (int i = 0; i < block_size; i++) {
+    //     file << block[i].key << ',' << block[i].val << '\n';
+    // }
+    // file << newData.key << ',' << newData.val << '\n';
+    // file.close();
+
+    // sort buffer
+    mergeSort(block, next_empty);
+
+    Node* fullData = NULL;
+    Node* fileData = NULL;
+
+    int numElements = 0;
+    int r;
+
+    struct stat s;
+    char* diskName = strcpy(new char[disk.length() + 1], disk.c_str());
+
+    int file_exists = stat(diskName, &s);
+
+    if (file_exists == 0) {
+        numElements = findFileSize();
+        fileData = new Node[numElements];
+        populateFileData(fileData);
+        fullData = new Node[numElements + next_empty];
+        mergeStep(fullData, fileData, numElements, block, next_empty);
+        delete(fileData);
+    }
+
+    if (fullData == NULL) {
+        fullData = block;
+    }
+
+    ofstream file_obj;
+    file_obj.open(disk, ios::trunc);
+    for (int i = 0; i < numElements + next_empty; i++) {
+        file_obj.write((char*)&fullData[i], sizeof(fullData[i])); 
+    }
+    // file_obj.write((char*)&newData, sizeof(newData)); 
+    file_obj.close();
     next_empty = 0; 
+    // readFromDisk();
 }
 
 void LSMTree::put(int *key, int *value) {
@@ -109,7 +167,7 @@ void LSMTree::mergeSort(Node* inputBlock, int n) {
     int mid;
     int i;
 
-    mid = n / 2;
+    mid = n * 0.5;
     Node *leftArray = new Node[mid];
     Node *rightArray = new Node[n - mid];
 
@@ -126,5 +184,5 @@ void LSMTree::mergeSort(Node* inputBlock, int n) {
 
 void LSMTree::merge() {
     cout << "here" << endl;
-    LSMTree::mergeSort(block, next_empty);
+    mergeSort(block, next_empty);
 }

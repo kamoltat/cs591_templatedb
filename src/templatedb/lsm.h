@@ -4,6 +4,9 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <sys/stat.h>
+#include <iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -17,9 +20,12 @@ class LSMTree {
         LSMTree(size_t bufferSize);
         void put(int *key, int *value);
         void printBuffer();
+        void readFromDisk();
         void merge();
     private:
         void write_to_disk();
+        int findFileSize();
+        void populateFileData(Node* fileData);
         void mergeSort(Node* block, int n);
         void mergeStep(Node* whole, Node* leftArray, int leftSize, Node* rightArray, int rightSize);
         size_t block_size;
