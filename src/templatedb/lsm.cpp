@@ -59,7 +59,7 @@ void LSMTree::populateFileData(Node* fileData) {
   
     ifile_obj.read((char*)&obj, sizeof(obj));
     while (!ifile_obj.eof()) { 
-        fileData[index] = Node{obj.key, obj.val};
+        fileData[index] = (Node){obj.key, obj.val};
         index += 1;
         ifile_obj.read((char*)&obj, sizeof(obj)); 
     }
