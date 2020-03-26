@@ -15,7 +15,7 @@ int main () {
     test.printBuffer();
     test.readFromDisk();
 
-    Node* testNode = test.get(14);
+    Node* testNode = test.get(2);
     if (testNode != NULL) {
         cout << "Key: " << testNode->key << " Val: " << testNode->val << endl;
     } 

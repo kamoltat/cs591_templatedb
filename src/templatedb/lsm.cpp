@@ -179,8 +179,8 @@ void LSMTree::mergeSort(Node* inputBlock, int n) {
     mergeSort(rightArray, n - mid);
     mergeStep(inputBlock, leftArray, mid, rightArray, n - mid);
 
-    delete(leftArray);
-    delete(rightArray);
+    delete[] leftArray;
+    delete[] rightArray;
 }
 
 void LSMTree::merge() {
@@ -250,7 +250,7 @@ nodeFinder* LSMTree::searchDisk(const int* key) {
 
     cout << "done" << endl;
 
-    delete(fileData);
+    delete[] fileData;
     if (ret != NULL && index != -1) {
         return ret;
     }
