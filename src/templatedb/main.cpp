@@ -15,21 +15,16 @@ int main () {
     test.printBuffer();
     test.readFromDisk();
 
-    Node* testNode = test.get(2);
-    if (testNode != NULL) {
+    Node* testNode;
+    for (int i = 0; i < 15; i++) {
+        testNode = test.get(i);
+        if (testNode != NULL) {
         cout << "Key: " << testNode->key << " Val: " << testNode->val << endl;
-    } 
-    else {
-        cout << "NOT FOUND 1" << endl;
+        } 
+        else {
+            cout << "NOT FOUND 1" << endl;
+        }
     }
-
-    cout << "FINDING 14 ON DISK" << endl;
-    testNode = test.get(2);
-    if (testNode != NULL) {
-        // cout << "Key: " << testNode->key << " Val: " << testNode->val << endl;
-    } 
-    else {
-        cout << "NOT FOUND 2" << endl;
-    }
+    
     return 0;
 }
