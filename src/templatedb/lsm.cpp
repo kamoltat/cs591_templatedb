@@ -111,6 +111,7 @@ void LSMTree::write_to_disk(){
     }
     // file_obj.write((char*)&newData, sizeof(newData)); 
     file_obj.close();
+    delete(diskName);
     next_empty = 0; 
     // readFromDisk();
 }
@@ -185,4 +186,91 @@ void LSMTree::mergeSort(Node* inputBlock, int n) {
 void LSMTree::merge() {
     cout << "here" << endl;
     mergeSort(block, next_empty);
+}
+
+int LSMTree::binarySearch(int upper, int lower, const int* key, Node* inputArray) {
+    int mid = ceil((lower + upper) * 0.5);
+    nodeFinder* found;
+    cout << mid << endl;
+    while (lower <= upper) {
+        mid = ceil((lower + upper) * 0.5);
+        // cout << mid << endl;
+        if (inputArray[mid].key == *key) {
+            
+            // found->node->key = inputArray[mid].key;
+            // found->node->val = inputArray[mid].val;
+            // cout << found->node->key << " " << found->node->val << endl;
+            // found->index = mid;
+            return mid;
+        }
+        else if (inputArray[mid].key > *key) {
+            upper = mid - 1;
+        }
+        else {
+            lower = mid + 1;
+        }
+    }  
+
+    return -1;  
+
+}
+
+// iterative binary search
+nodeFinder* LSMTree::searchBuffer(const int* key) {
+    int index = binarySearch(next_empty, 0, key, block);
+    nodeFinder* ret;
+
+    ret->node->key = block[index].key;
+    ret->node->val = block[index].val;
+    ret->index = index;
+
+    cout << "hello" << endl;
+    if (ret != NULL && index != -1) {
+        cout << ret->node->key << " " << ret->node->val << endl;
+        cout << "hello2" << endl;
+        return ret;
+    }
+
+    return NULL;
+}
+
+// iterative binary search
+nodeFinder* LSMTree::searchDisk(const int* key) {
+    int mid;
+    cout << "searchdisk" << endl;
+    int size = findFileSize();
+    Node* fileData = new Node[size];
+    populateFileData(fileData);
+    int index = binarySearch(size, 0, key, fileData);
+    nodeFinder* ret;
+
+    ret->node->key = fileData[index].key;
+    ret->node->val = fileData[index].val;
+    ret->index = index;
+
+    cout << "done" << endl;
+
+    delete(fileData);
+    if (ret != NULL && index != -1) {
+        return ret;
+    }
+
+    return NULL;
+}
+
+Node* LSMTree::get(const int key) {
+    mergeSort(block, next_empty);
+    nodeFinder* finder = searchBuffer(&key);
+    if (finder != NULL) {
+        cout << finder->node->key << " " << finder->node->val << endl;
+        return finder->node;    
+    }
+    else {
+        finder = searchDisk(&key);
+        if (finder != NULL) {
+            return finder->node;
+        }
+    }
+
+    return NULL;
 }

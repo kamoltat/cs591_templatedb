@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <iostream>
 #include <fstream>
+#include <cmath>
 
 using namespace std;
 
@@ -15,6 +16,11 @@ typedef struct Node{
   int val;
 } Node;
 
+typedef struct nodeFinder{
+  Node* node;
+  int index;
+} nodeFinder;
+
 class LSMTree {
     public:
         LSMTree(size_t bufferSize);
@@ -22,8 +28,12 @@ class LSMTree {
         void printBuffer();
         void readFromDisk();
         void merge();
+        Node* get(const int key);
     private:
         void write_to_disk();
+        int binarySearch(int lower, int upper, const int* key, Node* inputArray);
+        nodeFinder* searchBuffer(const int* key);
+        nodeFinder* searchDisk(const int* key);
         int findFileSize();
         void populateFileData(Node* fileData);
         void mergeSort(Node* block, int n);

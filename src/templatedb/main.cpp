@@ -9,12 +9,27 @@ int main () {
         test.put(&i, &i);
     }
 
-    for (int i = 0; i < 8; i++) {
-        test.put(&i, &i);
-    }
     // test.merge();
     cout << "**********************COMPLETED ADDITIONS***************************" << endl;
+
     test.printBuffer();
     test.readFromDisk();
+
+    Node* testNode = test.get(14);
+    if (testNode != NULL) {
+        cout << "Key: " << testNode->key << " Val: " << testNode->val << endl;
+    } 
+    else {
+        cout << "NOT FOUND 1" << endl;
+    }
+
+    cout << "FINDING 14 ON DISK" << endl;
+    testNode = test.get(2);
+    if (testNode != NULL) {
+        // cout << "Key: " << testNode->key << " Val: " << testNode->val << endl;
+    } 
+    else {
+        cout << "NOT FOUND 2" << endl;
+    }
     return 0;
 }
