@@ -24,10 +24,11 @@ typedef struct nodeFinder{
 class LSMTree {
     public:
         LSMTree(size_t bufferSize);
-        void put(int *key, int *value);
+        void put(int key, int value);
         void printBuffer();
         void readFromDisk();
         void merge();
+        void update(int key, int value);
         Node* get(const int key);
     private:
         void write_to_disk();

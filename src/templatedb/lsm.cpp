@@ -116,10 +116,10 @@ void LSMTree::write_to_disk(){
     // readFromDisk();
 }
 
-void LSMTree::put(int *key, int *value) {
+void LSMTree::put(int key, int value) {
     Node newData;
-    newData.key = *key;
-    newData.val = *value;
+    newData.key = key;
+    newData.val = value;
     if (next_empty == block_size) {
         // write to disk since buffer is full
         write_to_disk();
@@ -188,7 +188,7 @@ void LSMTree::merge() {
     mergeSort(block, next_empty);
 }
 
-int LSMTree::binarySearch(int upper, int lower, const int* key, Node* inputArray) {
+int LSMTree::binarySearch(int lower, int upper, const int* key, Node* inputArray) {
     int mid = ceil((lower + upper) * 0.5);
     nodeFinder* found;
     while (lower <= upper) {
@@ -210,7 +210,7 @@ int LSMTree::binarySearch(int upper, int lower, const int* key, Node* inputArray
 // iterative binary search
 nodeFinder* LSMTree::searchBuffer(const int* key) {
     cout << "searching through buffer..." << endl;
-    int index = binarySearch(next_empty, 0, key, block);
+    int index = binarySearch(0, next_empty, key, block);
     
     if (index == -1) {
         cout << "not found in buffer" << endl;
@@ -229,7 +229,7 @@ nodeFinder* LSMTree::searchDisk(const int* key) {
     int size = findFileSize();
     Node* fileData = new Node[size];
     populateFileData(fileData);
-    int index = binarySearch(size, 0, key, fileData);
+    int index = binarySearch(0, size, key, fileData);
 
     if (index == -1) {
         cout << "not found in disk" << endl;
@@ -259,4 +259,37 @@ Node* LSMTree::get(const int key) {
     }
 
     return NULL;
+}
+
+void LSMTree::update(int key, int value) {
+    mergeSort(block, next_empty);
+    int index = -1;
+
+    index = binarySearch(0, next_empty, &key, block);
+    if (index != -1) {
+        block[index].val = value;
+        return;
+    }
+
+    int size = findFileSize();
+    Node* fileData = new Node[size];
+    populateFileData(fileData);
+    index = binarySearch(0, size, &key, fileData);
+
+    if (index != -1) {
+        fileData[index].val = value;
+        ofstream file_obj;
+        file_obj.open(disk, ios::trunc);
+        for (int i = 0; i < size; i++) {
+            file_obj.write((char*)&fileData[i], sizeof(fileData[i])); 
+        }
+        // file_obj.write((char*)&newData, sizeof(newData)); 
+        file_obj.close();
+        delete[] fileData;
+        return;
+    }
+
+    delete[] fileData;
+    cout << "Key does not exist" << endl;
+    return;
 }

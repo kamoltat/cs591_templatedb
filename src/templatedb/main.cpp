@@ -6,7 +6,7 @@ int main () {
     size_t n = 10;
     LSMTree test = LSMTree(n);
     for (int i = 14; i > -1; i--) {
-        test.put(&i, &i);
+        test.put(i, i);
     }
 
     // test.merge();
@@ -25,6 +25,26 @@ int main () {
             cout << "NOT FOUND 1" << endl;
         }
     }
+
+    test.update(2, 5);
+    test.update(14, 1);
+
+    testNode = test.get(2);
+    if (testNode != NULL) {
+    cout << "Key: " << testNode->key << " Val: " << testNode->val << endl;
+    } 
+    else {
+        cout << "NOT FOUND 1" << endl;
+    }
+
+    testNode = test.get(14);
+    if (testNode != NULL) {
+    cout << "Key: " << testNode->key << " Val: " << testNode->val << endl;
+    } 
+    else {
+        cout << "NOT FOUND 1" << endl;
+    }
+    
     
     return 0;
 }
