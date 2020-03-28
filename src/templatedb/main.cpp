@@ -27,7 +27,7 @@ int main () {
     }
 
     test.update(2, 5);
-    test.update(14, 1);
+    test.update(15, 1);
 
     testNode = test.get(2);
     if (testNode != NULL) {
@@ -44,7 +44,28 @@ int main () {
     else {
         cout << "NOT FOUND 1" << endl;
     }
-    
-    
+
+    cout << "*****************REMOVAL********************" << endl;
+    test.remove(2);
+    test.printBuffer();
+    test.remove(15);
+    test.readFromDisk();
+
+    testNode = test.get(2);
+    if (testNode != NULL) {
+    cout << "Key: " << testNode->key << " Val: " << testNode->val << endl;
+    } 
+    else {
+        cout << "NOT FOUND" << endl;
+    }
+
+    testNode = test.get(14);
+    if (testNode != NULL) {
+    cout << "Key: " << testNode->key << " Val: " << testNode->val << endl;
+    } 
+    else {
+        cout << "NOT FOUND" << endl;
+    }
+
     return 0;
 }

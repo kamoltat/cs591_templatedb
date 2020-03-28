@@ -29,6 +29,7 @@ class LSMTree {
         void readFromDisk();
         void merge();
         void update(int key, int value);
+        void remove(int key);
         Node* get(const int key);
     private:
         void write_to_disk();

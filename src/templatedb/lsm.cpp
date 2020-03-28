@@ -293,3 +293,42 @@ void LSMTree::update(int key, int value) {
     cout << "Key does not exist" << endl;
     return;
 }
+
+void LSMTree::remove(int key) {
+    mergeSort(block, next_empty);
+    int index = binarySearch(0, next_empty, &key, block);
+    if (index != -1) {
+        for (int i = index; i < next_empty; i++) {
+            block[i].key = block[i + 1].key;
+            block[i].val = block[i + 1].val;
+        }
+        next_empty--;
+        return;
+    }
+
+    int size = findFileSize();
+    Node* fileData = new Node[size];
+    populateFileData(fileData);
+    index = binarySearch(0, size, &key, fileData);
+
+    if (index != -1) {
+        for (int i = index; i < next_empty; i++) {
+            fileData[i].key = fileData[i + 1].key;
+            fileData[i].val = fileData[i + 1].val;
+        }
+        ofstream file_obj;
+        file_obj.open(disk, ios::trunc);
+        for (int i = 0; i < size - 1; i++) {
+            file_obj.write((char*)&fileData[i], sizeof(fileData[i])); 
+        }
+        // file_obj.write((char*)&newData, sizeof(newData)); 
+        file_obj.close();
+        delete[] fileData;
+        return;
+    }
+
+    delete[] fileData;
+    cout << "Key does not exist" << endl;
+    return;
+
+}
