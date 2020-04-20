@@ -9,11 +9,21 @@ int main () {
     test.put(1, 1);
     test.put(2, 2);
     test.put(3, 3);
+
     test.put(4, 4);
     test.put(5, 5);
+    test.put(6, 6);
+
     test.put(7, 7);
     test.put(8, 8);
-    // test.put(9, 9);
+    test.put(9, 9);
+    test.put(10, 10);
+    test.put(11, 11);
+
+    test.put(12, 12);
+    test.put(13, 13);
+    test.put(14, 14);
+    test.put(15, 15);
 
 
     test.printBuffer();
@@ -29,7 +39,7 @@ int main () {
     Node obj; 
   
     // Reading from file into object "ifile_obj" 
-    cout << "read from disk 0"<< endl;
+    cout << "********************************read from disk 0************************************"<< endl;
     ifile_obj.read((char*)&obj, sizeof(obj));
     while (!ifile_obj.eof()) { 
         // print to see results
@@ -46,7 +56,7 @@ int main () {
     // Object of class Node to input data in file 
   
     // Reading from file into object "ifile_obj" 
-    cout << "read from disk 1"<< endl;
+    cout << "********************************read from disk 1************************************"<< endl;
     ifile_obj.read((char*)&obj, sizeof(obj));
     while (!ifile_obj.eof()) { 
         // print to see results
@@ -64,7 +74,7 @@ int main () {
     // Object of class Node to input data in file 
  
     // Reading from file into object "ifile_obj" 
-    cout << "read from disk 2"<< endl;
+    cout << "********************************read from disk 2************************************"<< endl;
     ifile_obj.read((char*)&obj, sizeof(obj));
     while (!ifile_obj.eof()) { 
         // print to see results
@@ -81,7 +91,46 @@ int main () {
     // Object of class Node to input data in file 
   
     // Reading from file into object "ifile_obj" 
-    cout << "read from disk 3s"<< endl;
+    cout << "********************************read from disk 3************************************"<< endl;
+    ifile_obj.read((char*)&obj, sizeof(obj));
+    while (!ifile_obj.eof()) { 
+        // print to see results
+        cout << "Key: " << obj.key << ", Value: " << obj.val << endl;
+        // Checking further 
+        ifile_obj.read((char*)&obj, sizeof(obj)); 
+    }
+    ifile_obj.close();
+
+    temp = "disk4";
+    ifile_obj.open(temp, ios::in); 
+
+    cout << "********************************read from disk 4************************************"<< endl;
+    ifile_obj.read((char*)&obj, sizeof(obj));
+    while (!ifile_obj.eof()) { 
+        // print to see results
+        cout << "Key: " << obj.key << ", Value: " << obj.val << endl;
+        // Checking further 
+        ifile_obj.read((char*)&obj, sizeof(obj)); 
+    }
+    ifile_obj.close();
+
+    temp = "disk5";
+    ifile_obj.open(temp, ios::in); 
+
+    cout << "********************************read from disk 5************************************"<< endl;
+    ifile_obj.read((char*)&obj, sizeof(obj));
+    while (!ifile_obj.eof()) { 
+        // print to see results
+        cout << "Key: " << obj.key << ", Value: " << obj.val << endl;
+        // Checking further 
+        ifile_obj.read((char*)&obj, sizeof(obj)); 
+    }
+    ifile_obj.close();
+
+    temp = "disk6";
+    ifile_obj.open(temp, ios::in); 
+
+    cout << "********************************read from disk 6************************************"<< endl;
     ifile_obj.read((char*)&obj, sizeof(obj));
     while (!ifile_obj.eof()) { 
         // print to see results
