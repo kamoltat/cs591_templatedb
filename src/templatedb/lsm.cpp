@@ -2,14 +2,47 @@
 
 using namespace std;
 
-LSMTree::LSMTree(size_t buffer_size) {
+Run::Run(size_t dataSize, string NewFileName) {
+    maxSize = dataSize;
+    fileName = NewFileName;
+}
+
+void Run::insert(Node* data, int numElements) {
+    ofstream file_obj;
+    file_obj.open(fileName, ios::trunc);
+    for (int i = 0; i < numElements; i++) {
+        file_obj.write((char*)&data[i], sizeof(data[i])); 
+    }
+    // file_obj.write((char*)&newData, sizeof(newData)); 
+    file_obj.close();
+    isEmpty = false;
+}
+
+Level::Level(size_t runSize) {
+    maxNumRuns = runSize;
+}
+
+LSMTree::LSMTree(size_t buffer_size, size_t levelCapacity) {
     block_size = buffer_size;
+    levelRunCapacity = levelCapacity;
     k = 2;
     next_empty = 0;
     block = new Node[block_size];
     disk = "storage.txt";
 
     cout << "completed\n";    
+}
+
+int LSMTree::findNextEmptyLevel(int currLevel) {
+    if (currLevel == levels.size()) {
+        return currLevel;
+    }
+
+    if (levels[currLevel].currNumRuns != levels[currLevel].maxNumRuns) {
+        return currLevel;
+    }
+
+    return findNextEmptyLevel(currLevel + 1);
 }
 
 void LSMTree::readFromDisk() {
@@ -51,9 +84,9 @@ int LSMTree::findFileSize() {
     return numElements;
 }
 
-void LSMTree::populateFileData(Node* fileData) {
+void LSMTree::populateFileData(Node* fileData, string fileName) {
     ifstream ifile_obj; 
-    ifile_obj.open(disk, ios::in); 
+    ifile_obj.open(fileName, ios::in); 
     Node obj; 
     int index = 0;
   
@@ -65,6 +98,63 @@ void LSMTree::populateFileData(Node* fileData) {
     }
 
     ifile_obj.close();
+}
+
+void LSMTree::mergeFiles(int nextEmptyLevel, Node* fullData){
+
+    Node* fileData = NULL;
+    Node* inputBlock = NULL;
+
+    int currNumElements = 0;
+    vector<Run> runs_vector = levels[nextEmptyLevel-1].runs;
+
+    for(int i = 0; i < runs_vector.size(); i++){
+        Run cur_run = runs_vector[i];
+        fileData = new Node[cur_run.maxSize];
+        inputBlock = new Node[currNumElements];
+        copy(fullData, &fullData[currNumElements], inputBlock);
+
+        populateFileData(fileData, cur_run.fileName);
+        mergeStep(fullData, inputBlock, currNumElements, fileData, cur_run.maxSize);
+        currNumElements += cur_run.maxSize;
+
+        delete[] fileData;
+        delete[] inputBlock;
+
+        fileData = NULL;
+        inputBlock = NULL;
+    }
+}
+
+void LSMTree::deleteRunsPreviousLevel(int currLevel) {
+    for(int i = 0; i < levels[currLevel].maxNumRuns; i++) {
+        levels[currLevel].runs[i].isEmpty = true;
+    }
+
+    levels[currLevel].currNumRuns = 0;
+}
+
+void LSMTree::mergeDown(int nextEmptyLevel) {
+
+    Node* fullData = NULL;
+    int runIndex;
+    for (int i = nextEmptyLevel; i > 0; i--) {
+        //merge all runs on previous level
+        //insert into new run on lower 
+        fullData = new Node[levelRunCapacity*levels[i - 1].runs[0].maxSize];
+        mergeFiles(i, fullData);
+    
+        runIndex = levels[i].currNumRuns;
+        // for (int j = 0; j < levels[i].maxNumRuns; j++) {
+        //     if (levels[i].runs[j].isEmpty) {
+        //         runIndex = j;
+        //         break;
+        //     }
+        // }
+
+        levels[i].runs[runIndex].insert(fullData, levelRunCapacity*levels[i - 1].runs[0].maxSize);
+        deleteRunsPreviousLevel(i - 1);
+    }
 }
 
 void LSMTree::write_to_disk(){
@@ -80,38 +170,82 @@ void LSMTree::write_to_disk(){
     // sort buffer
     mergeSort(block, next_empty);
 
-    Node* fullData = NULL;
-    Node* fileData = NULL;
-
-    int numElements = 0;
-    int r;
-
-    struct stat s;
-    char* diskName = strcpy(new char[disk.length() + 1], disk.c_str());
-
-    int file_exists = stat(diskName, &s);
-
-    if (file_exists == 0) {
-        numElements = findFileSize();
-        fileData = new Node[numElements];
-        populateFileData(fileData);
-        fullData = new Node[numElements + next_empty];
-        mergeStep(fullData, fileData, numElements, block, next_empty);
-        delete(fileData);
+    //find next empty level
+    int nextEmptyLevel = findNextEmptyLevel(0);
+    if (nextEmptyLevel == levels.size()) {
+        Level newLevel = Level(levelRunCapacity);
+        levels.push_back(newLevel);
     }
 
-    if (fullData == NULL) {
-        fullData = block;
+    size_t newSize;
+
+    if (nextEmptyLevel == 0) {
+        newSize = block_size;
+    }
+    else {
+        newSize = (levels[nextEmptyLevel - 1].runs[0].maxSize) * levelRunCapacity;
     }
 
-    ofstream file_obj;
-    file_obj.open(disk, ios::trunc);
-    for (int i = 0; i < numElements + next_empty; i++) {
-        file_obj.write((char*)&fullData[i], sizeof(fullData[i])); 
+    if (levels[nextEmptyLevel].runs.size() != levels[nextEmptyLevel].maxNumRuns) {
+        string fileName = "disk" + to_string(fileNameCounter);
+        fileNameCounter += 1;
+
+        Run newRun = Run(newSize, fileName);
+
+        levels[nextEmptyLevel].runs.push_back(newRun); 
+        levels[nextEmptyLevel].currNumRuns += 1;
+
     }
-    // file_obj.write((char*)&newData, sizeof(newData)); 
-    file_obj.close();
-    delete(diskName);
+
+    int nexEmptyRun;
+
+    if (nextEmptyLevel == 0) {
+        nexEmptyRun = levels[nextEmptyLevel].currNumRuns;
+        levels[nextEmptyLevel].runs[nexEmptyRun].insert(block, next_empty);
+        levels[nextEmptyLevel].currNumRuns += 1;
+    }
+
+    else {
+        mergeDown(nextEmptyLevel);
+        nexEmptyRun = levels[0].currNumRuns;
+        levels[0].runs[nexEmptyRun].insert(block, next_empty);
+        levels[0].currNumRuns += 1;
+    }
+   //insert into empty run
+
+
+    // Node* fullData = NULL;
+    // Node* fileData = NULL;
+
+    // int numElements = 0;
+    // int r;
+
+    // struct stat s;
+    // char* diskName = strcpy(new char[disk.length() + 1], disk.c_str());
+
+    // int file_exists = stat(diskName, &s);
+
+    // if (file_exists == 0) {
+    //     numElements = findFileSize();
+    //     fileData = new Node[numElements];
+    //     populateFileData(fileData);
+    //     fullData = new Node[numElements + next_empty];
+    //     mergeStep(fullData, fileData, numElements, block, next_empty);
+    //     delete(fileData);
+    // }
+
+    // if (fullData == NULL) {
+    //     fullData = block;
+    // }
+
+    // ofstream file_obj;
+    // file_obj.open(disk, ios::trunc);
+    // for (int i = 0; i < numElements + next_empty; i++) {
+    //     file_obj.write((char*)&fullData[i], sizeof(fullData[i])); 
+    // }
+    // // file_obj.write((char*)&newData, sizeof(newData)); 
+    // file_obj.close();
+    // delete(diskName);
     next_empty = 0; 
     // readFromDisk();
 }
@@ -228,7 +362,8 @@ nodeFinder* LSMTree::searchDisk(const int* key) {
     cout << "searching through disk..." << endl;
     int size = findFileSize();
     Node* fileData = new Node[size];
-    populateFileData(fileData);
+    string temp = "disk0";
+    populateFileData(fileData, temp);
     int index = binarySearch(0, size, key, fileData);
 
     if (index == -1) {
@@ -273,7 +408,8 @@ void LSMTree::update(int key, int value) {
 
     int size = findFileSize();
     Node* fileData = new Node[size];
-    populateFileData(fileData);
+    string temp = "temp";
+    populateFileData(fileData, temp);
     index = binarySearch(0, size, &key, fileData);
 
     if (index != -1) {
@@ -308,7 +444,8 @@ void LSMTree::remove(int key) {
 
     int size = findFileSize();
     Node* fileData = new Node[size];
-    populateFileData(fileData);
+    string temp = "temp";
+    populateFileData(fileData, temp);
     index = binarySearch(0, size, &key, fileData);
 
     if (index != -1) {
