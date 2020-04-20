@@ -131,7 +131,7 @@ void LSMTree::deleteRunsPreviousLevel(int currLevel) {
         levels[currLevel].runs[i].isEmpty = true;
     }
 
-    levels[currLevel].currNumRuns = 0;
+    levels[currLevel].currNumRuns = 1;
 }
 
 void LSMTree::mergeDown(int nextEmptyLevel) {
@@ -144,7 +144,7 @@ void LSMTree::mergeDown(int nextEmptyLevel) {
         fullData = new Node[levelRunCapacity*levels[i - 1].runs[0].maxSize];
         mergeFiles(i, fullData);
     
-        runIndex = levels[i].currNumRuns;
+        runIndex = levels[i].currNumRuns - 1;
         // for (int j = 0; j < levels[i].maxNumRuns; j++) {
         //     if (levels[i].runs[j].isEmpty) {
         //         runIndex = j;
@@ -200,16 +200,13 @@ void LSMTree::write_to_disk(){
     int nexEmptyRun;
 
     if (nextEmptyLevel == 0) {
-        nexEmptyRun = levels[nextEmptyLevel].currNumRuns;
+        nexEmptyRun = levels[nextEmptyLevel].currNumRuns - 1;
         levels[nextEmptyLevel].runs[nexEmptyRun].insert(block, next_empty);
-        levels[nextEmptyLevel].currNumRuns += 1;
     }
-
     else {
         mergeDown(nextEmptyLevel);
-        nexEmptyRun = levels[0].currNumRuns;
+        nexEmptyRun = levels[0].currNumRuns - 1;
         levels[0].runs[nexEmptyRun].insert(block, next_empty);
-        levels[0].currNumRuns += 1;
     }
    //insert into empty run
 
