@@ -50,6 +50,7 @@ class Level {
       //bloom filter
       int maxNumRuns;
       BloomFilter bloomFilter;
+      BloomFilter deletedBloomFilter;
       //search
       //put
       //remove
@@ -69,9 +70,11 @@ class LSMTree {
         void remove(int key);
         void printFencePointers();
         void checkBloomFilter(int level, string key);
+        void checkDeletedBloomFilter(int level, string key);
         Node* get(const int key);
     private:
         void updateFencePointers(int currLevel, int currRun, Node* fileData, int size);
+        void mergeDeletedBloomFilters(int currLevel, int prevLevel);
         void mergeBloomFilters(int currLevel, int prevLevel);
         void updateBloomFilter(Node* block, int next_empty, int currLevel);
         int fileNameCounter = 0;
