@@ -4,8 +4,6 @@
 
 using namespace std;
 
-namespace BF{
-
 class BloomFilter {
 public:
 	BloomFilter();
@@ -18,6 +16,9 @@ public:
 
 	int getIndexNum();
 	int getSize();
+	vector<bool> getVec();
+	void setVec(vector<bool> newBF);
+	void reset();
 private:
 	int numIndex;
 	int size;
@@ -27,4 +28,3 @@ private:
 	void getIndex( string key, vector<int>* index );
 };
 
-} // namespace BF

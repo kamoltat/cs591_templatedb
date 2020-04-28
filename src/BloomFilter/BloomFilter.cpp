@@ -2,7 +2,6 @@
 #include "murmurhash.h"
 
 using namespace std;
-using namespace BF;
 
 BloomFilter::BloomFilter(){
 	numElement = 1024;
@@ -10,6 +9,8 @@ BloomFilter::BloomFilter(){
 
 	numIndex = (int)floor(0.693*bitsPerElement+ 0.5);
 	size = numElement * bitsPerElement;
+
+	makeBloomFilter();
 }
 
 BloomFilter::BloomFilter( int numElement_, int bitsPerElement_ ){
@@ -23,6 +24,20 @@ BloomFilter::BloomFilter( int numElement_, int bitsPerElement_ ){
 
 void BloomFilter::makeBloomFilter(){
 	bf_vec.resize(size, 0);
+}
+
+vector<bool> BloomFilter::getVec() {
+	return bf_vec;
+}
+
+void BloomFilter::setVec(vector<bool> newBF) {
+	bf_vec = newBF;
+}
+
+void BloomFilter::reset() {
+	for (int i = 0; i < bf_vec.size(); i++) {
+		bf_vec[i] = false;
+	}
 }
 
 void BloomFilter::program( string key ){
