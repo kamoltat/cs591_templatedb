@@ -15,15 +15,13 @@ void Run::insert(Node* data, int numElements, int* fencePointer) {
     file_obj.open(fileName, ios::trunc);
     for (int i = 0; i < numElements; i++) {
         file_obj.write((char*)&data[i], sizeof(data[i])); 
-        if (!data[i].isDeleted) {
-            if (data[i].key < min) {
-                min = data[i].key;
-            }
-            if (data[i].key > max) {
-                max = data[i].key;
-            }
-            currSize += 1;
+        if (data[i].key < min) {
+            min = data[i].key;
         }
+        if (data[i].key > max) {
+            max = data[i].key;
+        }
+        currSize += 1;
 
     }
     
@@ -40,27 +38,38 @@ Level::Level(size_t runSize) {
     fencePointers = temp;
 }
 
-LSMTree::LSMTree(size_t buffer_size, size_t levelCapacity) {
+LSMTree::LSMTree(size_t buffer_size, string mergeType, size_t levelCapacity) {
     block_size = buffer_size;
     levelRunCapacity = levelCapacity;
     k = 2;
     next_empty = 0;
     block = new Node[block_size];
     disk = "storage.txt";
-
-    cout << "completed\n";    
+    mergeTypeStr = mergeType;
+    cout << "completed creation of " << mergeType << " LSM" << endl;    
 }
 
 int LSMTree::findNextEmptyLevel(int currLevel) {
     if (currLevel == levels.size()) {
         return currLevel;
     }
-
     if (levels[currLevel].currNumRuns != levels[currLevel].maxNumRuns) {
         return currLevel;
     }
 
     return findNextEmptyLevel(currLevel + 1);
+}
+
+int LSMTree::findNextEmptyLevelLeveled(int currLevel) {
+    if (currLevel == levels.size()) {
+        return currLevel;
+    }
+
+    if (levels[currLevel].runs[0].currSize != levels[currLevel].runs[0].maxSize) {
+        return currLevel;
+    }
+
+    return findNextEmptyLevelLeveled(currLevel + 1);
 }
 
 void LSMTree::updateBloomFilter(Node* block, int size, int level) {
@@ -116,7 +125,7 @@ void LSMTree::populateFileData(Node* fileData, string fileName) {
   
     ifile_obj.read((char*)&obj, sizeof(obj));
     while (!ifile_obj.eof()) { 
-        fileData[index] = (Node){obj.key, obj.val, obj.isDeleted};
+        fileData[index] = (Node){obj.key, obj.val, obj.entryNum, obj.isDeleted};
         index += 1;
         ifile_obj.read((char*)&obj, sizeof(obj)); 
     }
@@ -140,6 +149,7 @@ void LSMTree::mergeFiles(int nextEmptyLevel, Node* fullData){
 
         populateFileData(fileData, cur_run.fileName);
         mergeStep(fullData, inputBlock, currNumElements, fileData, cur_run.maxSize);
+
         currNumElements += cur_run.maxSize;
 
         delete[] fileData;
@@ -150,12 +160,33 @@ void LSMTree::mergeFiles(int nextEmptyLevel, Node* fullData){
     }
 }
 
+void LSMTree::mergeFilesLeveled(int nextEmptyLevel, Node* fullData){
+
+    Node* prevLevelFileData = NULL;
+    Node* currLevelFileData = NULL;
+
+    int currNumElements = 0;
+
+    Run prev_run = levels[nextEmptyLevel - 1].runs[0];
+    Run curr_run = levels[nextEmptyLevel].runs[0];
+
+    prevLevelFileData = new Node[prev_run.currSize];
+    currLevelFileData = new Node[curr_run.currSize];
+
+    populateFileData(prevLevelFileData, prev_run.fileName);
+    if (curr_run.currSize != 0) {
+        populateFileData(currLevelFileData, curr_run.fileName);
+    }
+    mergeStep(fullData, prevLevelFileData, prev_run.currSize, currLevelFileData, curr_run.currSize);
+}
+
 void LSMTree::deleteRunsPreviousLevel(int currLevel) {
     for (int i = 0; i < levels[currLevel].maxNumRuns; i++) {
         levels[currLevel].runs[i].isEmpty = true;
     }
 
     levels[currLevel].currNumRuns = 0;
+    levels[currLevel].runs[0].currSize = 0;
     levels[currLevel].bloomFilter.reset();
     levels[currLevel].deletedBloomFilter.reset();
 }
@@ -194,12 +225,6 @@ void LSMTree::mergeDown(int nextEmptyLevel) {
         mergeFiles(i, fullData);
 
         runIndex = levels[i].currNumRuns;
-        // for (int j = 0; j < levels[i].maxNumRuns; j++) {
-        //     if (levels[i].runs[j].isEmpty) {
-        //         runIndex = j;
-        //         break;
-        //     }
-        // }
 
         levels[i].runs[runIndex].insert(fullData, levelRunCapacity*levels[i - 1].runs[0].maxSize, currFencePointer);
         levels[i].fencePointers[runIndex] = {currFencePointer[0], currFencePointer[1]};
@@ -210,17 +235,27 @@ void LSMTree::mergeDown(int nextEmptyLevel) {
     }
 }
 
-void LSMTree::write_to_disk(){
-    //flush all data in memory to disk and also newData
-    //store it as storage.txt
-    // ofstream file (disk);
-    // for (int i = 0; i < block_size; i++) {
-    //     file << block[i].key << ',' << block[i].val << '\n';
-    // }
-    // file << newData.key << ',' << newData.val << '\n';
-    // file.close();
+void LSMTree::mergeDownLeveled(int nextEmptyLevel) {
 
-    // sort buffer
+    Node* fullData = NULL;
+    int* currFencePointer = new int(2);
+    int newSize;
+    for (int i = nextEmptyLevel; i > 0; i--) {
+        //merge all runs on previous level
+        //insert into new run on lower 
+        newSize = levels[i - 1].runs[0].currSize + levels[i].runs[0].currSize;
+        fullData = new Node[newSize];
+        mergeFilesLeveled(i, fullData);
+        levels[i].runs[0].insert(fullData, newSize, currFencePointer);
+        levels[i].fencePointers[0] = {currFencePointer[0], currFencePointer[1]};
+        levels[i].currNumRuns += 1;
+        mergeBloomFilters(i, i - 1);
+        mergeDeletedBloomFilters(i, i - 1);
+        deleteRunsPreviousLevel(i - 1);
+    }
+}
+
+void LSMTree::write_to_disk(){
     mergeSort(block, next_empty);
 
     //find next empty level
@@ -240,7 +275,7 @@ void LSMTree::write_to_disk(){
     }
 
     if (levels[nextEmptyLevel].runs.size() != levels[nextEmptyLevel].maxNumRuns) {
-        string fileName = "disk" + to_string(fileNameCounter);
+        string fileName = "diskT" + to_string(fileNameCounter);
         fileNameCounter += 1;
 
         Run newRun = Run(newSize, fileName);
@@ -265,52 +300,78 @@ void LSMTree::write_to_disk(){
         levels[0].currNumRuns += 1;
         updateBloomFilter(block, next_empty, 0);
     }
-   //insert into empty run
 
-    // Node* fullData = NULL;
-    // Node* fileData = NULL;
-
-    // int numElements = 0;
-    // int r;
-
-    // struct stat s;
-    // char* diskName = strcpy(new char[disk.length() + 1], disk.c_str());
-
-    // int file_exists = stat(diskName, &s);
-
-    // if (file_exists == 0) {
-    //     numElements = findFileSize();
-    //     fileData = new Node[numElements];
-    //     populateFileData(fileData);
-    //     fullData = new Node[numElements + next_empty];
-    //     mergeStep(fullData, fileData, numElements, block, next_empty);
-    //     delete(fileData);
-    // }
-
-    // if (fullData == NULL) {
-    //     fullData = block;
-    // }
-
-    // ofstream file_obj;
-    // file_obj.open(disk, ios::trunc);
-    // for (int i = 0; i < numElements + next_empty; i++) {
-    //     file_obj.write((char*)&fullData[i], sizeof(fullData[i])); 
-    // }
-    // // file_obj.write((char*)&newData, sizeof(newData)); 
-    // file_obj.close();
-    // delete(diskName);
     next_empty = 0; 
     // readFromDisk();
 }
 
-void LSMTree::put(int key, int value) {
+void LSMTree::write_to_disk_leveled(){
+    //flush all data in memory to disk and also newData
+    // sort buffer
+    mergeSort(block, next_empty);
+
+    //find next empty level
+    int nextEmptyLevel = findNextEmptyLevelLeveled(0);
+    if (nextEmptyLevel == levels.size()) {
+        Level newLevel = Level(1);
+        levels.push_back(newLevel);
+    }
+
+    size_t newSize;
+
+    if (nextEmptyLevel == 0) {
+        newSize = block_size;
+    }
+
+    else {
+        newSize = (levels[nextEmptyLevel - 1].runs[0].maxSize) * 2;
+    }
+
+    if (levels[nextEmptyLevel].runs.size() != levels[nextEmptyLevel].maxNumRuns) {
+        string fileName = "diskL" + to_string(fileNameCounter);
+        fileNameCounter += 1;
+
+        Run newRun = Run(newSize, fileName);
+        levels[nextEmptyLevel].runs.push_back(newRun);
+    }
+
+    int nextEmptyRun;
+    int* currFencePointer = new int(2);
+    if (nextEmptyLevel == 0) {
+        nextEmptyRun = levels[nextEmptyLevel].currNumRuns;
+        levels[nextEmptyLevel].runs[nextEmptyRun].insert(block, next_empty, currFencePointer);
+        levels[nextEmptyLevel].fencePointers[nextEmptyRun] = {currFencePointer[0], currFencePointer[1]};
+        levels[nextEmptyLevel].currNumRuns += 1;
+        updateBloomFilter(block, next_empty, nextEmptyLevel);
+    }
+
+    else {
+        mergeDownLeveled(nextEmptyLevel);
+        nextEmptyRun = levels[0].currNumRuns;
+        levels[0].runs[nextEmptyRun].insert(block, next_empty, currFencePointer);
+        levels[0].fencePointers[nextEmptyRun] = {currFencePointer[0], currFencePointer[1]};
+        levels[0].currNumRuns += 1;
+        updateBloomFilter(block, next_empty, 0);
+    }
+
+    next_empty = 0; 
+}
+
+void LSMTree::put(int key, int value, bool isDeleted) {
     Node newData;
     newData.key = key;
     newData.val = value;
-    newData.isDeleted = false;
+    newData.isDeleted = isDeleted;
+    newData.entryNum = currNumElements;
+    currNumElements += 1;
     if (next_empty == block_size) {
         // write to disk since buffer is full
-        write_to_disk();
+        if (mergeTypeStr == "L") {
+            write_to_disk_leveled();
+        }
+        else {
+            write_to_disk();
+        }
     }
 
     block[next_empty] = newData;
@@ -331,8 +392,21 @@ void LSMTree::mergeStep(Node *originalArray, Node *leftArray, int leftSize, Node
     i = 0;
 
     while (l < leftSize && r < rightSize) {
-        if(leftArray[l].key  < rightArray[r].key){
-            originalArray[i++] = leftArray[l++];
+        if(leftArray[l].key  <= rightArray[r].key) {
+            if (leftArray[l].key == rightArray[r].key) {
+                if (leftArray[l].entryNum > rightArray[r].entryNum) {
+                    if (leftArray[l].isDeleted && !rightArray[r].isDeleted) {
+                        r++;
+                    }
+                    originalArray[i++] = leftArray[l++];
+                }
+                else {
+                    originalArray[i++] = rightArray[r++];
+                }
+            }
+            else {
+                originalArray[i++] = leftArray[l++];
+            }
         } 
         else{
             originalArray[i++] = rightArray[r++];
@@ -411,7 +485,7 @@ nodeFinder* LSMTree::searchBuffer(const int* key) {
     }
 
     cout << "found in buffer" << endl;
-    Node found = {block[index].key, block[index].val};
+    Node found = {block[index].key, block[index].val, block[index].entryNum, block[index].isDeleted};
     nodeFinder *ret = new (nodeFinder){&found, index};
 
     return ret;
@@ -475,51 +549,32 @@ nodeFinder* LSMTree::searchDisk(const int* key) {
 Node* LSMTree::get(const int key) {
     nodeFinder* finder = searchBuffer(&key);
     if (finder != NULL) {
-        return finder->node;    
+        if (finder->node->isDeleted) {
+            return NULL;
+        }
+        else {
+            return finder->node;
+        }
     }
     else {
         finder = searchDisk(&key);
         if (finder != NULL) {
-            return finder->node;
+            if (finder->node->isDeleted) {
+
+                return NULL;
+            }
+            else {
+                return finder->node;
+            }
         }
     }
 
     return NULL;
 }
 
-// void LSMTree::update(int key, int value) {
-//     mergeSort(block, next_empty);
-//     int index = -1;
-
-//     index = binarySearch(0, next_empty, &key, block);
-//     if (index != -1) {
-//         block[index].val = value;
-//         return;
-//     }
-
-//     int size = findFileSize();
-//     Node* fileData = new Node[size];
-//     string temp = "temp";
-//     populateFileData(fileData, temp);
-//     index = binarySearch(0, size, &key, fileData);
-
-//     if (index != -1) {
-//         fileData[index].val = value;
-//         ofstream file_obj;
-//         file_obj.open(disk, ios::trunc);
-//         for (int i = 0; i < size; i++) {
-//             file_obj.write((char*)&fileData[i], sizeof(fileData[i])); 
-//         }
-//         // file_obj.write((char*)&newData, sizeof(newData)); 
-//         file_obj.close();
-//         delete[] fileData;
-//         return;
-//     }
-
-//     delete[] fileData;
-//     cout << "Key does not exist" << endl;
-//     return;
-// }
+void LSMTree::update(int key, int value) {
+    put(key, value);
+}
 
 void LSMTree::updateFencePointers(int currLevel, int currRun, Node* fileData, int size) {
     int i = 0;
@@ -553,62 +608,62 @@ void LSMTree::updateFencePointers(int currLevel, int currRun, Node* fileData, in
 }
 
 void LSMTree::remove(const int key) {
-    int index = -1;
-    for (int i = 0; i < next_empty; i++) {
-        if (block[i].key == key) {
-            index = i;
-            break;
-        }
-    }
-    if (index != -1) {
-        cout << "deleted node from buffer with key: " << block[index].key << endl;
-        for (int i = index; i < next_empty - 1; i++) {
-            block[i].key = block[i + 1].key;
-            block[i].val = block[i + 1].val;
-        }
-        next_empty--;
-        return;
-    }
+    put(key, -1, true);   
+    // int index = -1;
+    // for (int i = 0; i < next_empty; i++) {
+    //     if (block[i].key == key) {
+    //         index = i;
+    //         break;
+    //     }
+    // }
+    // if (index != -1) {
+    //     cout << "deleted node from buffer with key: " << block[index].key << endl;
+    //     for (int i = index; i < next_empty - 1; i++) {
+    //         block[i].key = block[i + 1].key;
+    //         block[i].val = block[i + 1].val;
+    //     }
+    //     next_empty--;
+    //     return;
+    // }
 
-    int size;
-    Node* fileData = NULL;
-    int* newFencePointer = new int(2);
+    // int size;
+    // Node* fileData = NULL;
+    // int* newFencePointer = new int(2);
 
-    // Find element in LSM Tree
-    for (int i = 0; i < levels.size(); i++) {
-        Level currLevel = levels[i];
-        if (currLevel.bloomFilter.query(to_string(key))) {
-            for (int j = 0; j < currLevel.runs.size(); j++) {
-                if (!currLevel.runs[j].isEmpty) {
-                    if (key >= currLevel.fencePointers[j][0] && key <= currLevel.fencePointers[j][1]) {
-                        size = findFileSize(currLevel.runs[j].fileName);
-                        fileData = new Node[size];
-                        populateFileData(fileData, currLevel.runs[j].fileName);
-                        index = binarySearch(0, size, &key, fileData);
+    // // Find element in LSM Tree
+    // for (int i = 0; i < levels.size(); i++) {
+    //     Level currLevel = levels[i];
+    //     if (currLevel.bloomFilter.query(to_string(key))) {
+    //         for (int j = 0; j < currLevel.runs.size(); j++) {
+    //             if (!currLevel.runs[j].isEmpty) {
+    //                 if (key >= currLevel.fencePointers[j][0] && key <= currLevel.fencePointers[j][1]) {
+    //                     size = findFileSize(currLevel.runs[j].fileName);
+    //                     fileData = new Node[size];
+    //                     populateFileData(fileData, currLevel.runs[j].fileName);
+    //                     index = binarySearch(0, size, &key, fileData);
 
-                        if (index != -1) {
-                            fileData[index].isDeleted = true;
-                            levels[i].deletedBloomFilter.program(to_string(fileData[index].key));
-                            // updateFencePointers(i, j, fileData, size);
-                            levels[i].runs[j].insert(fileData, size, newFencePointer);      
-                            levels[i].fencePointers[j] = {newFencePointer[0], newFencePointer[1]};    
-                            // updateFencePointers(i, j, fileData, size);
-                            levels[i].runs[j].currSize -= 1;                  
-                            cout << "deleted node from disk with key " << fileData[index].key << endl;
-                            delete[] fileData;
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-    }
+    //                     if (index != -1) {
+    //                         fileData[index].isDeleted = true;
+    //                         levels[i].deletedBloomFilter.program(to_string(fileData[index].key));
+    //                         // updateFencePointers(i, j, fileData, size);
+    //                         levels[i].runs[j].insert(fileData, size, newFencePointer);      
+    //                         levels[i].fencePointers[j] = {newFencePointer[0], newFencePointer[1]};    
+    //                         // updateFencePointers(i, j, fileData, size);
+    //                         levels[i].runs[j].currSize -= 1;                  
+    //                         cout << "deleted node from disk with key " << fileData[index].key << endl;
+    //                         delete[] fileData;
+    //                         return;
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 
-    cout << "key does not exist" << endl;
-    delete[] fileData;
-    delete[] newFencePointer;
-    return;
-    
+    // cout << "key does not exist" << endl;
+    // delete[] fileData;
+    // delete[] newFencePointer;
+    // return; 
 }
 
 void LSMTree::printFencePointers() {
@@ -626,3 +681,5 @@ void LSMTree::checkBloomFilter(int level, string key) {
 void LSMTree::checkDeletedBloomFilter(int level, string key) {
     cout << levels[level].deletedBloomFilter.query(key) << endl;
 }
+
+

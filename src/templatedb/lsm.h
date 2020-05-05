@@ -18,6 +18,7 @@ using namespace std;
 typedef struct Node{
   int key;
   int val;
+  long int entryNum;
   bool isDeleted;
 } Node;
 
@@ -61,8 +62,8 @@ class Level {
 
 class LSMTree {
     public:
-        LSMTree(size_t bufferSize, size_t levelCapacity);
-        void put(int key, int value);
+        LSMTree(size_t bufferSize, string mergeType, size_t levelCapacity = 1);
+        void put(int key, int value, bool isDeleted = false);
         void printBuffer();
         void readFromDisk();
         void merge();
@@ -73,6 +74,7 @@ class LSMTree {
         void checkDeletedBloomFilter(int level, string key);
         Node* get(const int key);
     private:
+        long int currNumElements = 0;
         void updateFencePointers(int currLevel, int currRun, Node* fileData, int size);
         void mergeDeletedBloomFilters(int currLevel, int prevLevel);
         void mergeBloomFilters(int currLevel, int prevLevel);
@@ -81,10 +83,14 @@ class LSMTree {
         vector<Level> levels;
         size_t levelRunCapacity;
         void mergeDown(int nextEmptyLevel);
+        void mergeDownLeveled(int nextEmptyLevel);
         void deleteRunsPreviousLevel(int currLevel);
         void mergeFiles(int nextEmptyLevel, Node* fullData);
+        void mergeFilesLeveled(int nextEmptyLevel, Node* fullData);
         void write_to_disk();
+        void write_to_disk_leveled();
         int findNextEmptyLevel(int currLevel);
+        int findNextEmptyLevelLeveled(int currLevel);
         int binarySearch(int lower, int upper, const int* key, Node* inputArray);
         nodeFinder* searchBuffer(const int* key);
         nodeFinder* searchDisk(const int* key);
@@ -97,8 +103,8 @@ class LSMTree {
         size_t next_empty;
         Node* block;
         string disk;
+        string mergeTypeStr;
 };
-
 // typedef struct nodei{
 //   node *node;
 //   int index;
