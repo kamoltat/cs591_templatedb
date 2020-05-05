@@ -515,7 +515,7 @@ nodeFinder* LSMTree::searchDisk(const int* key) {
             for (int j = 0; j < currLevel.runs.size(); j++) {
                 if (!currLevel.runs[j].isEmpty) {
                     if (*key >= currLevel.fencePointers[j][0] && *key <= currLevel.fencePointers[j][1]) {
-                        size = findFileSize(currLevel.runs[j].fileName);
+                        size = currLevel.runs[j].currSize;
                         fileData = new Node[size];
                         populateFileData(fileData, currLevel.runs[j].fileName);
                         index = binarySearch(0, size, key, fileData);
@@ -682,4 +682,37 @@ void LSMTree::checkDeletedBloomFilter(int level, string key) {
     cout << levels[level].deletedBloomFilter.query(key) << endl;
 }
 
+void LSMTree::rangeScan(int lower, int upper, vector<Node>* res) {
+    // search buffer
+    for (int i = 0; i < next_empty; i++) {
+        if (block[i].key >= lower && block[i].key <= upper) {
+            res->push_back(block[i]);
+        }
+    }
+    //search tree
+    Node* fileData = NULL;
+    Node nodeHolder;
+    Level currLevel = levels[0];
+    int index;
+    int size;
+    for (int i = 0; i < levels.size(); i++) {
+        currLevel = levels[i];
+        for (int j = 0; j < currLevel.runs.size(); j++) {
+            if (!currLevel.runs[j].isEmpty) {
+                if ((currLevel.fencePointers[j][0] >= lower && currLevel.fencePointers[j][0] <= upper) || 
+                    (currLevel.fencePointers[j][1] >= lower && currLevel.fencePointers[j][1] <= upper)) {
+                    size = currLevel.runs[j].currSize;
+                    fileData = new Node[size];
+                    populateFileData(fileData, currLevel.runs[j].fileName);
+                    for (int k = 0; k < size; k++) {
+                        if (fileData[k].key >= lower && fileData[k].key <= upper) {
+                            nodeHolder = {fileData[k].key, fileData[k].val, fileData[k].entryNum, fileData[k].isDeleted};
+                            res->push_back(nodeHolder);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 

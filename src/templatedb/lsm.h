@@ -72,6 +72,7 @@ class LSMTree {
         void printFencePointers();
         void checkBloomFilter(int level, string key);
         void checkDeletedBloomFilter(int level, string key);
+        void rangeScan(int lower, int upper, vector<Node>* res);
         Node* get(const int key);
     private:
         long int currNumElements = 0;
