@@ -5,6 +5,7 @@ using namespace std;
 Run::Run(size_t dataSize, string NewFileName) {
     maxSize = dataSize;
     fileName = NewFileName;
+    currSize = 0;
 }
 
 void Run::insert(Node* data, int numElements, int* fencePointer) {
@@ -12,17 +13,31 @@ void Run::insert(Node* data, int numElements, int* fencePointer) {
     ofstream file_obj;
     int min = INT_MAX;
     int max = INT_MIN;
+    int delKey;
     file_obj.open(fileName, ios::trunc);
     for (int i = 0; i < numElements; i++) {
-        file_obj.write((char*)&data[i], sizeof(data[i])); 
-        if (data[i].key < min) {
-            min = data[i].key;
+        if (data[i].isDeleted) {
+            delKey = data[i].key;
+            file_obj.write((char*)&data[i], sizeof(data[i])); 
         }
-        if (data[i].key > max) {
-            max = data[i].key;
+        if (data[i].key != delKey) {
+            file_obj.write((char*)&data[i], sizeof(data[i])); 
+            if (data[i].key < min) {
+                min = data[i].key;
+            }
+            if (data[i].key > max) {
+                max = data[i].key;
+            }
+            currSize += 1;
         }
-        currSize += 1;
-
+        // file_obj.write((char*)&data[i], sizeof(data[i])); 
+        // if (data[i].key < min) {
+        //     min = data[i].key;
+        // }
+        // if (data[i].key > max) {
+        //     max = data[i].key;
+        // }
+        // currSize += 1;
     }
     
     fencePointer[0] = min;
@@ -41,10 +56,8 @@ Level::Level(size_t runSize) {
 LSMTree::LSMTree(size_t buffer_size, string mergeType, size_t levelCapacity) {
     block_size = buffer_size;
     levelRunCapacity = levelCapacity;
-    k = 2;
     next_empty = 0;
     block = new Node[block_size];
-    disk = "storage.txt";
     mergeTypeStr = mergeType;
     cout << "completed creation of " << mergeType << " LSM" << endl;    
 }
@@ -484,7 +497,6 @@ nodeFinder* LSMTree::searchBuffer(const int* key) {
         return NULL;
     }
 
-    cout << "found in buffer" << endl;
     Node found = {block[index].key, block[index].val, block[index].entryNum, block[index].isDeleted};
     nodeFinder *ret = new (nodeFinder){&found, index};
 
@@ -526,8 +538,7 @@ nodeFinder* LSMTree::searchDisk(const int* key) {
                                     cout << "not found in disk" << endl;
                                     return NULL;
                             }
-                            cout << "found in disk" << endl;
-                            found = {fileData[index].key, fileData[index].val};
+                            found = {fileData[index].key, fileData[index].val, fileData[index].entryNum, fileData[index].isDeleted};
                             ret = new (nodeFinder){&found, index};
 
                             delete[] fileData;
@@ -559,8 +570,8 @@ Node* LSMTree::get(const int key) {
     else {
         finder = searchDisk(&key);
         if (finder != NULL) {
-            if (finder->node->isDeleted) {
-
+            
+            if (finder->node->isDeleted == true) {
                 return NULL;
             }
             else {
@@ -669,7 +680,9 @@ void LSMTree::remove(const int key) {
 void LSMTree::printFencePointers() {
     for (int i = 0; i < levels.size(); i++) {
         for (int j = 0; j < levels[i].fencePointers.size(); j++) {
-            cout << "L" << i << ": [" << levels[i].fencePointers[j][0] << ", " << levels[i].fencePointers[j][1] << "]" << endl;
+            if (levels[i].runs[j].isEmpty == false && levels[i].fencePointers[j][0] != INT_MIN) {
+                cout << "L" << i << "R" << j << ": [" << levels[i].fencePointers[j][0] << ", " << levels[i].fencePointers[j][1] << "]" << endl;
+            }      
         }
     }
 }
