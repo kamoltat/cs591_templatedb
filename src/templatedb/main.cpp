@@ -23,6 +23,7 @@ int main () {
     tierTree.put(90, 90);
     tierTree.put(101, 101);
     tierTree.put(102, 102);
+    tierTree.put(103, 103);
     tierTree.printFencePointers();
     tierTree.printBuffer();
     cout << "**********Searching for 23**********" << endl;
@@ -49,13 +50,12 @@ int main () {
     }
 
    // ****************************************** LEVELED LSM TESTING ***************************************************
-
-    cout << endl << "**********Leveled LSM Tree**********" << endl;
+    cout << endl << "-------------------------------------------------------------------------------------" << endl;
+    cout << "**********Leveled LSM Tree**********" << endl;
     LSMTree levelTree = LSMTree(n, "L");
     levelTree.put(50, 50);
     levelTree.put(25, 25);
     levelTree.put(100, 100);
-    cout << "here" << endl;
     levelTree.put(125, 125);
     levelTree.put(3, 3);
     levelTree.printFencePointers();
@@ -63,6 +63,7 @@ int main () {
     cout << "**********Inserting more elements**********" << endl;
     levelTree.put(23, 23);
     levelTree.put(95, 95);
+    levelTree.put(102, 102);
     levelTree.printFencePointers();
     levelTree.printBuffer();
     cout << "**********Searching for 23**********" << endl;
@@ -88,26 +89,26 @@ int main () {
         cout << "Key: " << getNode->key << " Value: " << getNode->val << " EntryNumber: " << getNode->entryNum << endl;
     }
 
-
-    // ifstream ifile_obj; 
+    //         // Object to read from file 
+    ifstream ifile_obj; 
   
-    // // Opening file in input mode 
-    // string temp = "diskL2";
-    // ifile_obj.open(temp, ios::in); 
+    // Opening file in input mode 
+    string temp = "diskL3";
+    ifile_obj.open(temp, ios::in); 
   
-    // // Object of class Node to input data in file 
-    // Node obj; 
+    // Object of class Node to input data in file 
+    Node obj; 
   
-    // // Reading from file into object "ifile_obj" 
-    // cout << "********************************read from disk************************************"<< endl;
-    // ifile_obj.read((char*)&obj, sizeof(obj));
-    // while (!ifile_obj.eof()) { 
-    //     // print to see results
-    //     cout << "Key: " << obj.key << ", Value: " << obj.val << " EntryNum: " << obj.entryNum << endl;
-    //     // Checking further 
-    //     ifile_obj.read((char*)&obj, sizeof(obj)); 
-    // }
-    // ifile_obj.close();
+    // Reading from file into object "ifile_obj" 
+    cout << "********************************read from disk************************************"<< endl;
+    ifile_obj.read((char*)&obj, sizeof(obj));
+    while (!ifile_obj.eof()) { 
+        // print to see results
+        cout << "Key: " << obj.key << ", Value: " << obj.val << " EntryNum: " << obj.entryNum << endl;
+        // Checking further 
+        ifile_obj.read((char*)&obj, sizeof(obj)); 
+    }
+    ifile_obj.close();
 
 
     return 0;
