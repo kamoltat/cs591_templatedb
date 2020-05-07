@@ -2,296 +2,114 @@
 using namespace std;
 
 int main () {
+
+    cout << "**********Tiered LSM Tree**********" << endl;
+    // Buffer Size
     size_t n = 1;
+    // Max number of runs per level
     size_t j = 3;
     // LSMTree test = LSMTree(n, "T", j);
-    LSMTree test = LSMTree(n, "T", j);
-    
-    test.put(1, 1);
-    test.put(2, 2);
-    test.put(3, 3);
-    test.put(4, 4);
-    test.put(5, 5);
-    test.put(6, 6);
-    test.put(7, 7);
-    test.put(8, 8);
-    test.put(9, 9);
-    test.put(10, 10);
-    test.put(11, 11);
-    test.put(12, 11);
-    test.put(13, 11);
-    test.put(14, 11);
-    test.put(15, 11);
-
-    test.printBuffer();
-    test.printFencePointers();
-
-    vector<Node> pls;
-    test.rangeScan(1, 100, &pls);
-    for (int i = 0; i < pls.size(); i++) {
-        cout << pls[i].key << endl;
+    LSMTree tierTree = LSMTree(n, "T", j);
+    tierTree.put(50, 50);
+    tierTree.put(25, 25);
+    tierTree.put(100, 100);
+    tierTree.put(125, 125);
+    tierTree.put(3, 3);
+    tierTree.printFencePointers();
+    tierTree.printBuffer();
+    cout << "**********Inserting more elements**********" << endl;
+    tierTree.put(23, 23);
+    tierTree.put(95, 95);
+    tierTree.put(90, 90);
+    tierTree.put(101, 101);
+    tierTree.put(102, 102);
+    tierTree.put(103, 103);
+    tierTree.printFencePointers();
+    tierTree.printBuffer();
+    cout << "**********Searching for 23**********" << endl;
+    Node* getNode = tierTree.get(23);
+    if (getNode != NULL) {
+        cout << "Key: " << getNode->key << " Value: " << getNode->val << " EntryNumber: " << getNode->entryNum << endl;
     }
-    // //         // Object to read from file 
-    // ifstream ifile_obj; 
+    cout << "**********Searching for 999**********" << endl;
+    getNode = tierTree.get(999);
+    if (getNode != NULL) {
+        cout << "Key: " << getNode->key << " Value: " << getNode->val << " EntryNumber: " << getNode->entryNum << endl;
+    }
+    cout << "**********Range Query**********" << endl;
+    vector<Node> rangeQueryRes;
+    tierTree.rangeScan(3, 99, &rangeQueryRes);
+    for (int i = 0; i < rangeQueryRes.size(); i++) {
+        cout << "Key: " << rangeQueryRes[i].key << " Value: " << rangeQueryRes[i].val << " EntryNumber: " << rangeQueryRes[i].entryNum << endl;
+    }
+    cout << "**********Delete node with key 102**********" << endl;
+    tierTree.remove(102);
+    getNode = tierTree.get(102);
+    if (getNode != NULL) {
+        cout << "Key: " << getNode->key << " Value: " << getNode->val << " EntryNumber: " << getNode->entryNum << endl;
+    }
+
+   // ****************************************** LEVELED LSM TESTING ***************************************************
+    cout << endl << "-------------------------------------------------------------------------------------" << endl;
+    cout << "**********Leveled LSM Tree**********" << endl;
+    LSMTree levelTree = LSMTree(n, "L");
+    levelTree.put(50, 50);
+    levelTree.put(25, 25);
+    levelTree.put(100, 100);
+    levelTree.put(125, 125);
+    levelTree.put(3, 3);
+    levelTree.printFencePointers();
+    levelTree.printBuffer();
+    cout << "**********Inserting more elements**********" << endl;
+    levelTree.put(23, 23);
+    levelTree.put(95, 95);
+    levelTree.put(102, 102);
+    levelTree.printFencePointers();
+    levelTree.printBuffer();
+    cout << "**********Searching for 23**********" << endl;
+    getNode = levelTree.get(23);
+    if (getNode != NULL) {
+        cout << "Key: " << getNode->key << " Value: " << getNode->val << " EntryNumber: " << getNode->entryNum << endl;
+    }
+    cout << "**********Searching for 999**********" << endl;
+    getNode = levelTree.get(999);
+    if (getNode != NULL) {
+        cout << "Key: " << getNode->key << " Value: " << getNode->val << " EntryNumber: " << getNode->entryNum << endl;
+    }
+    cout << "**********Range Query**********" << endl;
+    vector<Node> rangeQueryResL;
+    levelTree.rangeScan(3, 99, &rangeQueryResL);
+    for (int i = 0; i < rangeQueryResL.size(); i++) {
+        cout << "Key: " << rangeQueryResL[i].key << " Value: " << rangeQueryResL[i].val << " EntryNumber: " << rangeQueryResL[i].entryNum << endl;
+    }
+    cout << "**********Delete node with key 102**********" << endl;
+    levelTree.remove(102);
+    getNode = levelTree.get(102);
+    if (getNode != NULL) {
+        cout << "Key: " << getNode->key << " Value: " << getNode->val << " EntryNumber: " << getNode->entryNum << endl;
+    }
+
+    //         // Object to read from file 
+    ifstream ifile_obj; 
   
-    // // Opening file in input mode 
-    // string temp = "diskL0";
-    // ifile_obj.open(temp, ios::in); 
+    // Opening file in input mode 
+    string temp = "diskL3";
+    ifile_obj.open(temp, ios::in); 
   
-    // // Object of class Node to input data in file 
-    // Node obj; 
+    // Object of class Node to input data in file 
+    Node obj; 
   
-    // // Reading from file into object "ifile_obj" 
-    // cout << "********************************read from disk 0************************************"<< endl;
-    // ifile_obj.read((char*)&obj, sizeof(obj));
-    // while (!ifile_obj.eof()) { 
-    //     // print to see results
-    //     cout << "Key: " << obj.key << ", Value: " << obj.val << endl;
-    //     // Checking further 
-    //     ifile_obj.read((char*)&obj, sizeof(obj)); 
-    // }
-    // ifile_obj.close();
+    // Reading from file into object "ifile_obj" 
+    cout << "********************************read from disk************************************"<< endl;
+    ifile_obj.read((char*)&obj, sizeof(obj));
+    while (!ifile_obj.eof()) { 
+        // print to see results
+        cout << "Key: " << obj.key << ", Value: " << obj.val << " EntryNum: " << obj.entryNum << endl;
+        // Checking further 
+        ifile_obj.read((char*)&obj, sizeof(obj)); 
+    }
+    ifile_obj.close();
 
-    // temp = "diskL1";
-    // ifile_obj.open(temp, ios::in); 
-  
-    // // Object of class Node to input data in file 
-  
-    // // Reading from file into object "ifile_obj" 
-    // cout << "********************************read from disk 1************************************"<< endl;
-    // ifile_obj.read((char*)&obj, sizeof(obj));
-    // while (!ifile_obj.eof()) { 
-    //     // print to see results
-    //     cout << "Key: " << obj.key << ", Value: " << obj.val << endl;
-    //     // Checking further 
-    //     ifile_obj.read((char*)&obj, sizeof(obj)); 
-    // }
-    // ifile_obj.close();
-
-    // temp = "diskL2";
-    // ifile_obj.open(temp, ios::in); 
-  
-    // // Object of class Node to input data in file 
-    // // Reading from file into object "ifile_obj" 
-    // cout << "********************************read from disk 2************************************"<< endl;
-    // ifile_obj.read((char*)&obj, sizeof(obj));
-    // while (!ifile_obj.eof()) { 
-    //     // print to see results
-    //     cout << "Key: " << obj.key << ", Value: " << obj.val << endl;
-    //     // Checking further 
-    //     ifile_obj.read((char*)&obj, sizeof(obj)); 
-    // }
-    // ifile_obj.close();
-  
-    // // Opening file in input mode 
-    // temp = "disk1";
-    // ifile_obj.open(temp, ios::in); 
-  
-    // // Object of class Node to input data in file 
-  
-    // // Reading from file into object "ifile_obj" 
-    // cout << "********************************read from disk 1************************************"<< endl;
-    // ifile_obj.read((char*)&obj, sizeof(obj));
-    // while (!ifile_obj.eof()) { 
-    //     // print to see results
-    //     cout << "Key: " << obj.key << ", Value: " << obj.val << endl;
-    //     // Checking further 
-    //     ifile_obj.read((char*)&obj, sizeof(obj)); 
-    // }
-    // ifile_obj.close();
-
-  
-    // // Opening file in input mode 
-    // temp = "disk2";
-    // ifile_obj.open(temp, ios::in); 
-  
-    // // Object of class Node to input data in file 
- 
-    // // Reading from file into object "ifile_obj" 
-    // cout << "********************************read from disk 2************************************"<< endl;
-    // ifile_obj.read((char*)&obj, sizeof(obj));
-    // while (!ifile_obj.eof()) { 
-    //     // print to see results
-    //     cout << "Key: " << obj.key << ", Value: " << obj.val << endl;
-    //     // Checking further 
-    //     ifile_obj.read((char*)&obj, sizeof(obj)); 
-    // }
-    // ifile_obj.close();
- 
-    // // Opening file in input mode 
-    // temp = "disk3";
-    // ifile_obj.open(temp, ios::in); 
-  
-    // // Object of class Node to input data in file 
-  
-    // // Reading from file into object "ifile_obj" 
-    // cout << "********************************read from disk 3************************************"<< endl;
-    // ifile_obj.read((char*)&obj, sizeof(obj));
-    // while (!ifile_obj.eof()) { 
-    //     // print to see results
-    //     cout << "Key: " << obj.key << ", Value: " << obj.val << endl;
-    //     // Checking further 
-    //     ifile_obj.read((char*)&obj, sizeof(obj)); 
-    // }
-    // ifile_obj.close();
-
-    // temp = "disk4";
-    // ifile_obj.open(temp, ios::in); 
-
-    // cout << "********************************read from disk 4************************************"<< endl;
-    // ifile_obj.read((char*)&obj, sizeof(obj));
-    // while (!ifile_obj.eof()) { 
-    //     // print to see results
-    //     cout << "Key: " << obj.key << ", Value: " << obj.val << endl;
-    //     // Checking further 
-    //     ifile_obj.read((char*)&obj, sizeof(obj)); 
-    // }
-    // ifile_obj.close();
-
-    // temp = "disk5";
-    // ifile_obj.open(temp, ios::in); 
-
-    // cout << "********************************read from disk 5************************************"<< endl;
-    // ifile_obj.read((char*)&obj, sizeof(obj));
-    // while (!ifile_obj.eof()) { 
-    //     // print to see results
-    //     cout << "Key: " << obj.key << ", Value: " << obj.val << endl;
-    //     // Checking further 
-    //     ifile_obj.read((char*)&obj, sizeof(obj)); 
-    // }
-    // ifile_obj.close();
-
-    // temp = "disk6";
-    // ifile_obj.open(temp, ios::in); 
-
-    // cout << "********************************read from disk 6************************************"<< endl;
-    // ifile_obj.read((char*)&obj, sizeof(obj));
-    // while (!ifile_obj.eof()) { 
-    //     // print to see results
-    //     cout << "Key: " << obj.key << ", Value: " << obj.val << endl;
-    //     // Checking further 
-    //     ifile_obj.read((char*)&obj, sizeof(obj)); 
-    // }
-    // ifile_obj.close();
-
-    // test.printFencePointers();
-    // Node* temp = test.get(10);
-    // if (temp != NULL) {
-    //     cout <<  "found " << temp->key << ": " << temp->val << endl;
-    // }
-    // cout << "***************************DELETE*****************************" << endl;
-    // test.remove(10);
-    // temp = test.get(10);
-    // if (temp != NULL) {
-    //     cout << "found " << temp->key << ": " << temp->val << endl;
-    // }
-    // cout << "***************************AFTER DELETE*****************************" << endl;
-    // test.printFencePointers();
-    // test.put(12, 12);
-    // test.put(13, 13);
-    // test.put(14, 14);
-    // cout << "***************************AFTER INSERTING MORE*****************************" << endl;
-    // temp = test.get(10);
-    // if (temp != NULL) {
-    //     cout << "found " << temp->key << ": " << temp->val << endl;
-    // }
-
-    // ifstream ifile_obj; 
-  
-    // // Opening file in input mode 
-    // string tempstr = "diskT3";
-    // ifile_obj.open(tempstr, ios::in); 
-  
-    // // Object of class Node to input data in file 
-    // Node obj; 
-  
-    // // Reading from file into object "ifile_obj" 
-    // cout << "********************************read from disk 3************************************"<< endl;
-    // ifile_obj.read((char*)&obj, sizeof(obj));
-    // while (!ifile_obj.eof()) { 
-    //     // print to see results
-    //     cout << "Key: " << obj.key << ", Value: " << obj.val << ", entryNum: " << obj.entryNum << ", isDeleted: " << obj.isDeleted << endl;
-    //     // Checking further 
-    //     ifile_obj.read((char*)&obj, sizeof(obj)); 
-    // }
-    // ifile_obj.close();
-
-    // test.printBuffer();
-    // test.printFencePointers();
-
-    // test.checkBloomFilter(0, to_string(10));
-    // test.checkBloomFilter(0, to_string(8));
-    // test.checkBloomFilter(0, to_string(9));
-
-    // test.checkBloomFilter(1, to_string(1));
-    // test.checkBloomFilter(1, to_string(2));
-    // test.checkBloomFilter(1, to_string(3));
-
-    // test.checkBloomFilter(1, to_string(7));
-    // test.checkBloomFilter(1, to_string(8));
-    // test.checkBloomFilter(1, to_string(9));
-
-    // for (int i = 14; i > -1; i--) {
-    //     test.put(i, i);
-    // }
-
-    // // test.merge();
-    // cout << "**********************COMPLETED ADDITIONS***************************" << endl;
-
-    // test.printBuffer();
-    // test.readFromDisk();
-
-    // Node* testNode;
-    // for (int i = 0; i < 15; i++) {
-    //     testNode = test.get(i);
-    //     if (testNode != NULL) {
-    //     cout << "Key: " << testNode->key << " Val: " << testNode->val << endl;
-    //     } 
-    //     else {
-    //         cout << "NOT FOUND 1" << endl;
-    //     }
-    // }
-
-    // test.update(2, 5);
-    // test.update(15, 1);
-
-    // testNode = test.get(2);
-    // if (testNode != NULL) {
-    // cout << "Key: " << testNode->key << " Val: " << testNode->val << endl;
-    // } 
-    // else {
-    //     cout << "NOT FOUND 1" << endl;
-    // }
-
-    // testNode = test.get(14);
-    // if (testNode != NULL) {
-    // cout << "Key: " << testNode->key << " Val: " << testNode->val << endl;
-    // } 
-    // else {
-    //     cout << "NOT FOUND 1" << endl;
-    // }
-
-    // cout << "*****************REMOVAL********************" << endl;
-    // test.remove(2);
-    // test.printBuffer();
-    // test.remove(15);
-    // test.readFromDisk();
-
-    // testNode = test.get(2);
-    // if (testNode != NULL) {
-    // cout << "Key: " << testNode->key << " Val: " << testNode->val << endl;
-    // } 
-    // else {
-    //     cout << "NOT FOUND" << endl;
-    // }
-
-    // testNode = test.get(14);
-    // if (testNode != NULL) {
-    // cout << "Key: " << testNode->key << " Val: " << testNode->val << endl;
-    // } 
-    // else {
-    //     cout << "NOT FOUND" << endl;
-    // }
 
     return 0;
 }
