@@ -6,7 +6,7 @@ int main () {
     size_t j = 3;
     // LSMTree test = LSMTree(n, "T", j);
     LSMTree test = LSMTree(n, "T", j);
-
+    
     test.put(1, 1);
     test.put(2, 2);
     test.put(3, 3);
