@@ -17,28 +17,28 @@ void Run::insert(Node* data, int numElements, int* fencePointer) {
     int delKey;
     file_obj.open(fileName, ios::trunc);
     for (int i = 0; i < numElements; i++) {
-        if (data[i].isDeleted) {
-            delKey = data[i].key;
-            file_obj.write((char*)&data[i], sizeof(data[i])); 
-        }
-        if (data[i].key != delKey) {
-            file_obj.write((char*)&data[i], sizeof(data[i])); 
-            if (data[i].key < min) {
-                min = data[i].key;
-            }
-            if (data[i].key > max) {
-                max = data[i].key;
-            }
-            currSize += 1;
-        }
-        // file_obj.write((char*)&data[i], sizeof(data[i])); 
-        // if (data[i].key < min) {
-        //     min = data[i].key;
+        // if (data[i].isDeleted) {
+        //     delKey = data[i].key;
+        //     file_obj.write((char*)&data[i], sizeof(data[i])); 
         // }
-        // if (data[i].key > max) {
-        //     max = data[i].key;
+        // if (data[i].key != delKey) {
+        //     file_obj.write((char*)&data[i], sizeof(data[i])); 
+        //     if (data[i].key < min) {
+        //         min = data[i].key;
+        //     }
+        //     if (data[i].key > max) {
+        //         max = data[i].key;
+        //     }
+        //     currSize += 1;
         // }
-        // currSize += 1;
+        file_obj.write((char*)&data[i], sizeof(data[i])); 
+        if (data[i].key < min) {
+            min = data[i].key;
+        }
+        if (data[i].key > max) {
+            max = data[i].key;
+        }
+        currSize += 1;
     }
     
     fencePointer[0] = min;
