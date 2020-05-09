@@ -31,8 +31,6 @@ class Run {
     public:
       Run(size_t dataSize, string newFileName);
       void insert(Node* data, int numElements, int* fencePointer);
-      void update(int key, int value);
-      void remove(int key);
       string fileName;
       int maxSize;
       int currSize;
@@ -47,15 +45,9 @@ class Level {
       vector<Run> runs;
       vector<vector<int>> fencePointers;
       int currNumRuns = 0;
-      //fence pointer
-      //bloom filter
       int maxNumRuns;
       BloomFilter bloomFilter;
       BloomFilter deletedBloomFilter;
-      //search
-      //put
-      //remove
-      //update
     private:
 
 };
@@ -106,9 +98,6 @@ class LSMTree {
         string disk;
         string mergeTypeStr;
 };
-// typedef struct nodei{
-//   node *node;
-//   int index;
-// } nodei;
+
 
 #endif
